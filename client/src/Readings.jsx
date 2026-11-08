@@ -13,6 +13,7 @@ const today = () => new Date().toLocaleDateString('en-CA');
 export default function Readings() {
   const [readings, setReadings] = useState([]);
   const [form, setForm] = useState({ date: today(), slot: 'morning', value: '' });
+  const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState('');
 
   async function load() {
@@ -29,11 +30,16 @@ export default function Readings() {
 
   const change = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  async function add(e) {
+  async function save(e) {
     e.preventDefault();
     setError('');
     try {
-      await api('/readings', { method: 'POST', body: form });
+      if (editingId) {
+        await api(`/readings/${editingId}`, { method: 'PUT', body: form });
+        setEditingId(null);
+      } else {
+        await api('/readings', { method: 'POST', body: form });
+      }
       setForm({ ...form, value: '' });
       load();
     } catch (err) {
@@ -41,11 +47,24 @@ export default function Readings() {
     }
   }
 
+  function startEdit(r) {
+    setError('');
+    setEditingId(r.id);
+    setForm({ date: r.date, slot: r.slot, value: String(r.value) });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setError('');
+    setForm({ date: today(), slot: 'morning', value: '' });
+  }
+
   async function remove(id) {
     if (!window.confirm('Delete this reading?')) return;
     setError('');
     try {
       await api(`/readings/${id}`, { method: 'DELETE' });
+      if (editingId === id) cancelEdit();
       load();
     } catch (err) {
       setError(err.message);
@@ -54,8 +73,8 @@ export default function Readings() {
 
   return (
     <div>
-      <h2>Add reading</h2>
-      <form onSubmit={add}>
+      <h2>{editingId ? 'Edit reading' : 'Add reading'}</h2>
+      <form onSubmit={save}>
         <input name="date" type="date" value={form.date} max={today()} onChange={change} />{' '}
         <select name="slot" value={form.slot} onChange={change}>
           {Object.entries(SLOTS).map(([key, label]) => (
@@ -63,7 +82,8 @@ export default function Readings() {
           ))}
         </select>{' '}
         <input name="value" type="number" placeholder="mg/dl" value={form.value} onChange={change} />{' '}
-        <button type="submit">Add</button>
+        <button type="submit">{editingId ? 'Save' : 'Add'}</button>{' '}
+        {editingId && <button type="button" onClick={cancelEdit}>Cancel</button>}
       </form>
       {error && <p style={{ color: 'crimson' }}>{error}</p>}
 
@@ -75,6 +95,7 @@ export default function Readings() {
           {readings.map((r) => (
             <li key={r.id}>
               {r.date} - {SLOTS[r.slot]}: <b>{r.value}</b> mg/dl{' '}
+              <button onClick={() => startEdit(r)}>Edit</button>{' '}
               <button onClick={() => remove(r.id)}>Delete</button>
             </li>
           ))}
