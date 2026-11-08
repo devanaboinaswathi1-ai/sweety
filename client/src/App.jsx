@@ -6,6 +6,7 @@ import { getToken, getUser, clearSession } from './api';
 
 export default function App() {
   const [user, setUser] = useState(getToken() ? getUser() : null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   if (!user) return <Login onLogin={setUser} />;
 
@@ -14,8 +15,8 @@ export default function App() {
       <h1>Sweety</h1>
       <p>Hello, {user.name}!</p>
       <button onClick={() => { clearSession(); setUser(null); }}>Log out</button>
-      <Readings />
-      <Reports />
+      <Readings onChange={() => setRefreshKey((k) => k + 1)} />
+      <Reports refreshKey={refreshKey} />
     </div>
   );
 }

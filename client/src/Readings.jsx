@@ -10,7 +10,7 @@ const SLOTS = {
 
 const today = () => new Date().toLocaleDateString('en-CA');
 
-export default function Readings() {
+export default function Readings({ onChange }) {
   const [readings, setReadings] = useState([]);
   const [form, setForm] = useState({ date: today(), slot: 'morning', value: '' });
   const [editingId, setEditingId] = useState(null);
@@ -19,6 +19,7 @@ export default function Readings() {
   async function load() {
     try {
       setReadings(await api('/readings'));
+      if (onChange) onChange();
     } catch (err) {
       setError(err.message);
     }
