@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { Pool, types } = require('pg');
 
 // DATE columns ni 'YYYY-MM-DD' string ga ivvadaniki (timezone problems raavu)
