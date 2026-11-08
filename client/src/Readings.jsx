@@ -41,6 +41,17 @@ export default function Readings() {
     }
   }
 
+  async function remove(id) {
+    if (!window.confirm('Delete this reading?')) return;
+    setError('');
+    try {
+      await api(`/readings/${id}`, { method: 'DELETE' });
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   return (
     <div>
       <h2>Add reading</h2>
@@ -63,7 +74,8 @@ export default function Readings() {
         <ul>
           {readings.map((r) => (
             <li key={r.id}>
-              {r.date} - {SLOTS[r.slot]}: <b>{r.value}</b> mg/dl
+              {r.date} - {SLOTS[r.slot]}: <b>{r.value}</b> mg/dl{' '}
+              <button onClick={() => remove(r.id)}>Delete</button>
             </li>
           ))}
         </ul>
