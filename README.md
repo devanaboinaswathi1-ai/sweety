@@ -47,6 +47,7 @@ cd server && npm run dev
 # terminal 2 - UI on http://localhost:5173
 cd client && npm run dev
 ```
+Keep the server and the client in two separate terminals.
 
 ## 6. Tests
 ```bash
@@ -70,6 +71,8 @@ Tests run against `sweety_test` (never the demo DB). They cover date-range calcu
 - Monthly report = the whole month before the selected date. Month-to-date = 1st of the month up to the selected date.
 - Average is rounded to 1 decimal. Empty periods return count 0 and the UI shows an empty state.
 - The API URL is hardcoded in `client/src/api.js` (`http://localhost:5000/api`).
+- "Max 4 readings per day" is checked in the API. In practice it is also guaranteed by the 4 unique slots (one reading per slot per day), so the UI shows the duplicate-slot message first.
+- Future dates: the server returns "Date cannot be in the future." (covered by tests). In the UI, the browser's date picker also blocks future dates before the request is sent.
 
 **With more time I would**
 - Move the API URL to a `VITE_API_URL` env variable.
