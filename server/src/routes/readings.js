@@ -3,6 +3,9 @@ const pool = require('../db');
 const auth = require('../middleware/auth');
 const { SLOTS, validateBasic } = require('../utils/validateReading');
 
+// "a Morning (fasting)" / "an After lunch"
+const withArticle = (label) => (/^[aeiou]/i.test(label) ? 'an ' : 'a ') + label;
+
 router.use(auth); // every route below needs login
 
 const COLS = `id, to_char(reading_date, 'YYYY-MM-DD') AS date, slot, value`;
@@ -20,7 +23,7 @@ async function checkDbRules(userId, date, slot, excludeId = null) {
     params
   );
   if (rows.some((r) => r.slot === slot)) {
-    return `You already have an ${SLOTS[slot]} reading for this date.`;
+    return `You already have ${withArticle(SLOTS[slot])} reading for this date.`;
   }
   if (rows.length >= 4) return 'You can add only 4 readings per day.';
   return null;
@@ -43,7 +46,7 @@ router.post('/', async (req, res) => {
   } catch (e) {
     if (e.code === '23505') {
       return res.status(400).json({
-        error: `You already have an ${SLOTS[slot]} reading for this date.`,
+        error: `You already have ${withArticle(SLOTS[slot])} reading for this date.`,
       });
     }
     console.error(e);
