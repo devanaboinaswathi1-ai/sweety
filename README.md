@@ -53,30 +53,41 @@ Keep the server and the client in two separate terminals.
 ```bash
 cd server && npm test
 ```
-Tests run against `sweety_test` (never the demo DB). They cover date-range calculation, validation rules, duplicate slot, and one user being unable to modify another user's reading.
+Tests run against `sweety_test` (never the demo DB). They cover date-range calculation, validation rules, duplicate slot, and one user being unable to delete another user's reading.
 
 ## API
 | Method | Path | Notes |
 |---|---|---|
-| POST | /api/auth/register | name, email, password |
+| POST | /api/auth/register | name, email, password (min 6 characters) |
 | POST | /api/auth/login | returns user + JWT |
 | GET/POST | /api/readings | GET supports `?date=YYYY-MM-DD` |
 | PUT/DELETE | /api/readings/:id | owner only |
-| GET | /api/reports?type=daily&date=YYYY-MM-DD | daily, month-to-date and monthly stats |
+| GET | /api/reports?date=YYYY-MM-DD | returns `daily` (with readings list), `monthToDate` and `monthly` stats. `date` defaults to today |
+
+All `/api/readings` and `/api/reports` routes need the header `Authorization: Bearer <token>`.
 
 ## Notes
 **Assumptions**
 - Dates are stored as Postgres `DATE` and handled as `YYYY-MM-DD` strings to avoid timezone bugs.
-- "Future date" is checked against the server's current date.
+- "Future date" is checked against the server's local date.
 - Monthly report = the whole month before the selected date. Month-to-date = 1st of the month up to the selected date.
 - Average is rounded to 1 decimal. Empty periods return count 0 and the UI shows an empty state.
 - The API URL is hardcoded in `client/src/api.js` (`http://localhost:5000/api`).
 - "Max 4 readings per day" is checked in the API. In practice it is also guaranteed by the 4 unique slots (one reading per slot per day), so the UI shows the duplicate-slot message first.
 - Future dates: the server returns "Date cannot be in the future." (covered by tests). In the UI, the browser's date picker also blocks future dates before the request is sent.
+- Passwords are hashed with bcrypt. Emails are lowercased. JWT tokens expire after 7 days.
+- CORS is open for local development.
+
+**Known limitations**
+- Automated tests cover date ranges, validation, duplicate slot and cross-user delete. Auth endpoints, report queries with data and the frontend were tested manually.
+- Impossible dates such as `2026-02-31` sent directly to the readings API are not rejected cleanly (the database returns an error). The UI date picker prevents this.
+- When a token expires, the user must log out and log in again.
 
 **With more time I would**
 - Move the API URL to a `VITE_API_URL` env variable.
-- Add frontend tests (React Testing Library) for the reading form.
+- Validate real calendar dates and invalid ids with 400/404 responses.
+- Log the user out automatically when the token expires.
+- Add more tests (401 without token, negative values, update, delete, report boundaries) and frontend tests with React Testing Library.
 - Add pagination on GET /readings and a monthly line chart.
 - Add Docker Compose for Postgres and the app.
 - Add rate limiting on auth routes.
