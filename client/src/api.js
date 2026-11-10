@@ -30,6 +30,14 @@ export async function api(path, { method = 'GET', body } = {}) {
 
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
+
+  // Token expired or invalid: log out and go back to the login page
+  if (res.status === 401 && token) {
+    clearSession();
+    window.location.reload();
+    return null;
+  }
+
   if (!res.ok) throw new Error(data.error || 'Something went wrong.');
   return data;
 }
